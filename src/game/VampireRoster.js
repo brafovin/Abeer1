@@ -2,6 +2,7 @@
 // names, faces and powers every time), plus the two unbefriendable Sovereigns.
 import { seeded } from '../core/utils.js';
 import { POWER_ORDER, POWERS } from './Powers.js';
+import { ARCHETYPES, ARCH_PALETTES, ARCH_TITLES, ANCIENT_HAIR, pickArchetype, rollLook, rollFace } from '../entities/models/archetypes.js';
 
 export const COURT_SIZE = 1024;
 
@@ -61,7 +62,8 @@ const PALETTES = [
   { main: 0x141214, accent: 0x8a0a1c, dark: 0x080708, trim: 0x9aa0a0, name: 'mourning black' },
   { main: 0x3a0a26, accent: 0xff4a8a, dark: 0x16060f, trim: 0xd0a0b8, name: 'nightshade' },
 ];
-const SKINS = [0xebe5ec, 0xefe7ee, 0xe4dde6, 0xddd4dc, 0xd6ccd4, 0xcfc4cc, 0xf2eef4];
+const SKINS = [0xebe5ec, 0xefe7ee, 0xe4dde6, 0xddd4dc, 0xd6ccd4, 0xcfc4cc, 0xf2eef4, 0xe6d8d8, 0xd9d0dc, 0xcdd2d8];
+const ANCIENT_SKINS = [0xc9c2cb, 0xbfbac4, 0xb4b2bd, 0xc6bcc0];
 
 function titleFor(level, female) {
   if (level >= 30) return female ? 'Countess' : 'Count';
@@ -115,19 +117,42 @@ export function getRoster() {
       heightScale: rng.range(0.95, 1.06),
       lips: rng.pick([0x8e1428, 0x6a0a1c, 0x9a2a4a, 0x4a0a14]),
     };
-    if (level >= 30) appearance.accessory = 'crown';
+    // archetype: body type, face structure, kit, headgear, silhouette, weapon and fighting stance. A separate
+    // generator keeps names, levels and personalities stable while the looks diversify.
+    const arng = seeded(id * 977 + 31);
+    const archId = pickArchetype(level, arng);
+    const look = rollLook(archId, female, arng);
+    Object.assign(appearance, look);
+    appearance.heightScale = look.build.h;
+    appearance.fangs = true;
+    let hairName = hair.name;
+    let paletteName = pal.name;
+    if (archId !== 'noble') {
+      const ap = arng.pick(ARCH_PALETTES[archId]);
+      Object.assign(appearance, { main: ap.main, accent: ap.accent, dark: ap.dark, trim: ap.trim, armor: ap.armor });
+      paletteName = ap.name;
+    } else appearance.armor = pal.dark;
+    if (archId === 'ancient') {
+      const ah = arng.pick(ANCIENT_HAIR);
+      Object.assign(appearance, { hairRoot: ah.root, hairTip: ah.tip, hairHighlight: ah.hi, skin: arng.pick(ANCIENT_SKINS) });
+      hairName = ah.name;
+    }
+    if (appearance.accessory === 'lily' && archId !== 'noble' && archId !== 'sorcerer') appearance.accessory = 'earrings';
+    const title = archId === 'noble' ? titleFor(level, female) : arng.pick(ARCH_TITLES[archId][female ? 'f' : 'm']);
+    const finalPower = archId !== 'noble' && arng() < 0.7 ? arng.pick(ARCHETYPES[archId].powers) : power;
     list.push({
       id,
       name,
       house,
       female,
       level,
-      title: titleFor(level, female),
-      power,
+      title,
+      archetype: archId,
+      power: finalPower,
       personality,
       greeting: rng.pick(GREETINGS[personality]).replace('{house}', house),
-      hairName: hair.name,
-      paletteName: pal.name,
+      hairName,
+      paletteName,
       appearance,
     });
   }
@@ -144,7 +169,9 @@ export const SOVEREIGNS = {
     power: 'sovereign_wrath',
     appearance: {
       seed: 6661, gender: 'm', hair: 'longMale', hairRoot: 0x2a0a10, hairTip: 0x8a1428, hairHighlight: 0xff3a4a, eye: 0xff1010, skin: 0xece0e4,
-      outfit: 'cape', main: 0x1a0508, accent: 0xb0101c, dark: 0x0a0204, trim: 0xd4a94c, accessory: 'crown', crownColor: 0xd4a94c, weapon: 'sword', heightScale: 1.0,
+      outfit: 'coat', main: 0x1a0508, accent: 0xb0101c, dark: 0x0a0204, trim: 0xd4a94c, armor: 0x2a1a1e, accessory: 'none', weapon: 'greatsword',
+      archetype: 'lord', headgear: 'spikedCrown', back: 'wingsCape', shoulders: 'fur', marks: ['scar', 'runes'], fangs: true,
+      build: { h: 1.1, b: 1.24, l: 1.18, r: 1.04, leg: 1.02, hd: 1.03 }, heightScale: 1.1, face: rollFace('lord', false, seeded(6661)),
     },
     refuse: 'Friendship? You crawl into MY throne room and offer me friendship? I will wear your skin as a banner.',
   },
@@ -155,7 +182,9 @@ export const SOVEREIGNS = {
     power: 'empress_night',
     appearance: {
       seed: 6662, gender: 'f', hair: 'wavy', hairRoot: 0x0a0812, hairTip: 0x2a1a40, hairHighlight: 0x9a40ff, eye: 0xc040ff, skin: 0xf0e8f0,
-      outfit: 'gown', main: 0x1c0a2c, accent: 0xa040ff, dark: 0x0a0510, trim: 0xc8b0e0, accessory: 'crown', crownColor: 0xb8a0d8, weapon: 'claws', heightScale: 1.0, lips: 0x4a0a3a,
+      outfit: 'gown', main: 0x1c0a2c, accent: 0xa040ff, dark: 0x0a0510, trim: 0xc8b0e0, armor: 0x2a1a3a, accessory: 'none', weapon: 'claws', lips: 0x4a0a3a,
+      archetype: 'lord', headgear: 'horns', back: 'wings', shoulders: 'collar', marks: ['runes', 'veins'], fangs: true,
+      build: { h: 1.12, b: 1.0, l: 1.0, r: 1.1, leg: 1.04, hd: 1.0 }, heightScale: 1.12, face: rollFace('lord', true, seeded(6662)),
     },
     refuse: 'How sweet. A stray thinks it may sit at our table. No, little one — you are dinner.',
   },

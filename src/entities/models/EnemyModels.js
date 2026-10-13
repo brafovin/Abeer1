@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import { toon, glow, flat, part, limb, lathe, strandGeometry, bladeGeometry, optimiseRig, disposeObject } from './Toon.js';
 import { buildSkeleton, headGeometry, HumanoidAnimator } from './Humanoid.js';
 import { clamp, damp, seeded } from '../../core/utils.js';
+import { createVampireModel } from './VampireModels.js';
+import { rollFace } from './archetypes.js';
 
 /** Per-instance material registry so hit flashes / fades affect only one enemy. */
 class MatSet {
@@ -170,80 +172,69 @@ function createCrawler(variant = 0) {
   return ctrl;
 }
 
+// ───────────────────────────────────────────── Vampire thralls ──────────────────────────────────
+// The Hollow Knight, Night Stalker and Blood Mage are fallen vampires. They are built with the same
+// archetype kit as the court (pale skin, burning red eyes, fangs, gothic gear) so the whole cast shares
+// one art style, but with per-instance materials so hit flashes and fades stay per enemy.
+
+/** Clone the shared toon/glow materials so this one enemy can flash and fade on its own. */
+function instanceMaterials(vm, M) {
+  const map = new Map();
+  vm.root.traverse((o) => {
+    if (!o.isMesh || o.userData.isOutline) return;
+    let c = map.get(o.material);
+    if (!c) {
+      const m = o.material;
+      c = m.clone();
+      c.onBeforeCompile = m.onBeforeCompile;
+      c.customProgramCacheKey = m.customProgramCacheKey;
+      c.userData = { ...m.userData };
+      if (m.isMeshBasicMaterial) c.userData.isGlow = true;
+      else {
+        c.userData.baseEmissive = (m.emissive ?? new THREE.Color(0)).clone();
+        c.userData.baseEmissiveIntensity = m.emissiveIntensity ?? 1;
+      }
+      M.list.push(c);
+      map.set(m, c);
+    }
+    o.material = c;
+  });
+  return map;
+}
+
+function buildThrall(appearance, opts = {}) {
+  const M = new MatSet();
+  const vm = createVampireModel(appearance, opts);
+  const mats = instanceMaterials(vm, M);
+  return { M, vm, eyeMat: mats.get(vm.eyeMat) ?? null };
+}
+
+const KNIGHT_LOOK = {
+  seed: 4101, gender: 'm', archetype: 'warrior', outfit: 'vest', hair: 'capOnly', hairRoot: 0x1a1416, hairTip: 0x3a3032, hairHighlight: 0x5a5052,
+  eye: 0xff2a2a, skin: 0xb9b3bd, main: 0x1a1a20, accent: 0x7a0a18, dark: 0x0c0c10, trim: 0x8a909c, armor: 0x474c58, accessory: 'none', fangs: true,
+  weapon: 'swordShield', headgear: 'hornedHelm', back: 'cloak', shoulders: 'spikes', marks: ['scar'],
+  build: { h: 1.14, b: 1.34, l: 1.3, r: 1.02, leg: 0.98, hd: 1.05 }, heightScale: 1.14, face: rollFace('warrior', false, seeded(4101)),
+};
+const STALKER_LOOK = {
+  seed: 4102, gender: 'm', archetype: 'ancient', outfit: 'rags', hair: 'lank', hairRoot: 0x6a6a72, hairTip: 0xa8a8b4, hairHighlight: 0xdcdce6,
+  eye: 0xff1a30, skin: 0x9d9ba8, main: 0x141218, accent: 0x6a0a1c, dark: 0x060508, trim: 0xb0aab8, armor: 0x2a2630, accessory: 'none', fangs: true,
+  weapon: 'claws', headgear: 'none', back: 'cloak', shoulders: 'bone', marks: ['veins', 'hollow', 'maw'],
+  build: { h: 1.25, b: 0.72, l: 0.66, r: 1.36, leg: 1.08, hd: 0.94 }, heightScale: 1.25, face: rollFace('ancient', false, seeded(4102)),
+};
+const MAGE_LOOK = {
+  seed: 4103, gender: 'm', archetype: 'sorcerer', outfit: 'coat', hair: 'slick', hairRoot: 0x120a10, hairTip: 0x3a1a26, hairHighlight: 0x6a2a3c,
+  eye: 0xff2640, skin: 0xe2d6dc, main: 0x2a0a14, accent: 0xff1638, dark: 0x120608, trim: 0xb89a7a, armor: 0x2a0a16, accessory: 'none', fangs: true,
+  weapon: 'none', headgear: 'hood', back: 'cloak', shoulders: 'mantle', marks: ['runes'],
+  build: { h: 1.04, b: 0.94, l: 0.92, r: 1.02, leg: 1.02, hd: 1.0 }, heightScale: 1.04, face: rollFace('sorcerer', false, seeded(4103)),
+};
+
 // ───────────────────────────────────────────── Hollow Knight ────────────────────────────────────
 
 function createHollowKnight() {
-  const M = new MatSet();
-  const dims = { hipY: 1.05, thigh: 0.5, shin: 0.49, torso: 0.56, shoulderW: 0.26, hipW: 0.11, upperArm: 0.33, forearm: 0.3, neck: 0.06, headR: 0.13 };
-  const j = buildSkeleton(dims);
-  const iron = M.toon(0x3a3d47, { rim: 1.8 });
-  const ironDark = M.toon(0x22232a, { rim: 1.2 });
-  const rust = M.toon(0x5a2e22);
-  const cloth = M.toon(0x3a0a12);
-  const soul = M.glow(0x8fd0ff, 3.0);
-  part(j.spine, lathe([[0.16, -0.06], [0.155, 0.08], [0.17, 0.2], [0.19, 0.28]], { scaleZ: 0.75 }), ironDark);
-  part(j.chest, lathe([[0.18, -0.12], [0.21, 0.0], [0.23, 0.12], [0.24, 0.24], [0.2, 0.3], [0.09, 0.34]], { scaleZ: 0.72 }), iron, { outline: 0.01 });
-  part(j.chest, new THREE.BoxGeometry(0.02, 0.3, 0.02), rust, { pos: [0, 0.1, 0.17], outline: false });
-  // tabard
-  part(j.hips, new THREE.BoxGeometry(0.26, 0.6, 0.02), cloth, { pos: [0, -0.25, 0.15], rot: [0.05, 0, 0] });
-  part(j.hips, new THREE.BoxGeometry(0.28, 0.55, 0.02), cloth, { pos: [0, -0.22, -0.15], rot: [-0.05, 0, 0] });
-  part(j.hips, lathe([[0.17, 0.08], [0.19, 0.0], [0.2, -0.08], [0.12, -0.14]], { scaleZ: 0.78 }), ironDark);
-  // pauldrons
-  for (const s of [1, -1]) {
-    const sh = s > 0 ? j.shoulderL : j.shoulderR;
-    part(sh, new THREE.SphereGeometry(0.13, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), iron, { pos: [0.03 * s, 0.03, 0], rot: [0, 0, -0.4 * s], scale: [1.1, 0.7, 1.05], outline: 0.01 });
-    for (let k = 0; k < 3; k++) part(sh, new THREE.ConeGeometry(0.025, 0.12, 5), ironDark, { pos: [(0.05 + k * 0.04) * s, 0.09 - k * 0.02, -0.02], rot: [0, 0, -0.6 * s], outline: 0.004 });
-  }
-  for (const side of ['L', 'R']) {
-    part(j['thigh' + side], limb(0.095, 0.08, dims.thigh, 10), ironDark, { outline: 0.008 });
-    part(j['knee' + side], new THREE.SphereGeometry(0.075, 10, 8), iron, { pos: [0, 0, 0.03], outline: 0.006 });
-    part(j['knee' + side], limb(0.085, 0.075, dims.shin, 10), iron, { outline: 0.008 });
-    part(j['foot' + side], new THREE.BoxGeometry(0.13, 0.08, 0.26), ironDark, { pos: [0, -0.04, 0.05], outline: 0.006 });
-    part(j['shoulder' + side], limb(0.075, 0.065, dims.upperArm, 10), ironDark, { outline: 0.007 });
-    part(j['elbow' + side], limb(0.075, 0.07, dims.forearm, 10), iron, { outline: 0.007 });
-    part(j['hand' + side], new THREE.BoxGeometry(0.09, 0.11, 0.1), ironDark, { pos: [0, -0.05, 0], outline: 0.005 });
-  }
-  // great helm with a glowing slit
-  part(j.head, new THREE.CylinderGeometry(0.13, 0.14, 0.3, 14), iron, { pos: [0, 0.0, 0], outline: 0.01 });
-  part(j.head, new THREE.SphereGeometry(0.13, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), iron, { pos: [0, 0.15, 0], outline: 0.01 });
-  part(j.head, new THREE.BoxGeometry(0.17, 0.018, 0.04), soul, { pos: [0, 0.03, 0.125], outline: false });
-  part(j.head, new THREE.BoxGeometry(0.016, 0.12, 0.03), M.toon(0x101015), { pos: [0, -0.03, 0.135], outline: false });
-  part(j.head, new THREE.ConeGeometry(0.03, 0.28, 6), rust, { pos: [0, 0.3, -0.03], rot: [-0.3, 0, 0], outline: 0.004 });
-  // tattered cloak
-  const cloak = new THREE.LatheGeometry([[0.26, 0.06], [0.28, -0.3], [0.33, -0.8], [0.36, -1.15]].map(([r, y]) => new THREE.Vector2(r, y)), 14, Math.PI * 0.55, Math.PI * 0.9);
-  const pos = cloak.attributes.position;
-  const rng = seeded(77);
-  for (let i = 0; i < pos.count; i++) if (pos.getY(i) < -1.0) pos.setY(i, pos.getY(i) + rng.range(0, 0.35));
-  cloak.computeVertexNormals();
-  part(j.cape, cloak, M.toon(0x16101a, { side: THREE.DoubleSide }), { pos: [0, 0, 0.1] });
-  // greatsword (right) and kite shield (left)
-  const sword = new THREE.Group();
-  sword.position.set(0, -0.06, 0);
-  sword.rotation.x = 0.9;
-  j.handR.add(sword);
-  part(sword, new THREE.BoxGeometry(0.035, 0.035, 0.26), M.toon(0x1a1414), { pos: [0, 0, 0.0] });
-  part(sword, new THREE.BoxGeometry(0.3, 0.04, 0.05), rust, { pos: [0, 0, 0.14] });
-  part(sword, new THREE.BoxGeometry(0.1, 0.022, 1.25), iron, { pos: [0, 0, 0.78], outline: 0.006 });
-  part(sword, new THREE.BoxGeometry(0.02, 0.026, 1.1), M.glow(0x6ab0ff, 1.2), { pos: [0, 0, 0.75], outline: false });
-  const shield = new THREE.Group();
-  shield.position.set(0.1, -0.15, 0.04);
-  j.elbowL.add(shield);
-  const sh = new THREE.Shape();
-  sh.moveTo(-0.24, 0.32);
-  sh.lineTo(0.24, 0.32);
-  sh.lineTo(0.22, -0.1);
-  sh.quadraticCurveTo(0.12, -0.4, 0, -0.5);
-  sh.quadraticCurveTo(-0.12, -0.4, -0.22, -0.1);
-  sh.lineTo(-0.24, 0.32);
-  const shGeo = new THREE.ExtrudeGeometry(sh, { depth: 0.05, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 1 });
-  shGeo.rotateY(Math.PI / 2);
-  part(shield, shGeo, iron, { outline: 0.008 });
-  part(shield, new THREE.CircleGeometry(0.07, 16).rotateY(Math.PI / 2), M.glow(0x8fd0ff, 1.4), { pos: [0.085, 0.05, 0], outline: false });
-  optimiseRig(j.root);
-  const animator = new HumanoidAnimator(j, 'sword');
-  const ctrl = makeController(j.root, M, {
+  const { M, vm, eyeMat } = buildThrall(KNIGHT_LOOK);
+  const ctrl = makeController(vm.root, M, {
     height: 2.1,
-    eyeMat: soul,
+    eyeMat,
     update(dt, s) {
       ctrl.tickFlash(dt);
       const t = s.t ?? 0;
@@ -254,13 +245,12 @@ function createHollowKnight() {
       else if (s.action === 'block') action = null;
       else if (s.action === 'hurt') action = { type: 'hurt', t };
       else if (s.action === 'dead') action = { type: 'dead', t };
-      animator.update(dt, {
+      vm.update(dt, {
         speed: (s.speed ?? 0) * 1.5,
         grounded: true,
         action,
         poseHook: (p, add) => {
-          add(p, 'spine', 0.12, 0, 0);
-          add(p, 'head', 0.1, 0, 0);
+          add(p, 'spine', 0.08, 0, 0);
           if (s.action === 'block' || s.blocking) {
             add(p, 'shoulderL', -1.35, 0.4, -0.3);
             add(p, 'elbowL', -1.0, 0, 0);
@@ -278,46 +268,10 @@ function createHollowKnight() {
 // ───────────────────────────────────────────── Night Stalker ────────────────────────────────────
 
 function createNightStalker() {
-  const M = new MatSet();
-  const dims = { hipY: 1.12, thigh: 0.56, shin: 0.56, torso: 0.62, shoulderW: 0.2, hipW: 0.08, upperArm: 0.52, forearm: 0.5, neck: 0.16, headR: 0.12 };
-  const j = buildSkeleton(dims);
-  const skin = M.toon(0x17131c, { rim: 2.4 });
-  const bone = M.toon(0x2a2430, { rim: 2.0 });
-  const eye = M.glow(0xf2f4ff, 3.5);
-  const teeth = M.glow(0xd8d0c8, 1.1);
-  part(j.spine, lathe([[0.1, -0.05], [0.09, 0.1], [0.11, 0.25], [0.12, 0.3]], { scaleZ: 0.7 }), skin, { outline: 0.007 });
-  part(j.chest, lathe([[0.12, -0.12], [0.14, 0.0], [0.15, 0.15], [0.13, 0.28], [0.06, 0.33]], { scaleZ: 0.6 }), skin, { outline: 0.007 });
-  for (let i = 0; i < 5; i++) part(j.chest, new THREE.TorusGeometry(0.14 - i * 0.004, 0.008, 4, 16, Math.PI), bone, { pos: [0, 0.18 - i * 0.05, 0.0], rot: [0, 0, 0], scale: [1, 0.35, 0.6], outline: false });
-  // spine ridge
-  for (let i = 0; i < 7; i++) part(j.chest, new THREE.ConeGeometry(0.02, 0.08, 4), bone, { pos: [0, 0.3 - i * 0.07, -0.08], rot: [-1.2, 0, 0], outline: 0.004 });
-  part(j.chest, new THREE.CylinderGeometry(0.035, 0.045, dims.neck + 0.1, 8).translate(0, 0.38, 0), skin, { outline: 0.005 });
-  part(j.hips, lathe([[0.1, 0.06], [0.12, 0.0], [0.1, -0.08]], { scaleZ: 0.7 }), skin);
-  for (const side of ['L', 'R']) {
-    part(j['thigh' + side], limb(0.06, 0.04, dims.thigh, 8), skin, { outline: 0.006 });
-    part(j['knee' + side], limb(0.04, 0.03, dims.shin, 8), skin, { outline: 0.006 });
-    part(j['foot' + side], new THREE.ConeGeometry(0.04, 0.22, 5), skin, { pos: [0, -0.03, 0.08], rot: [Math.PI / 2, 0, 0], outline: 0.005 });
-    part(j['shoulder' + side], limb(0.045, 0.032, dims.upperArm, 8), skin, { outline: 0.006 });
-    part(j['elbow' + side], limb(0.032, 0.026, dims.forearm, 8), skin, { outline: 0.006 });
-    const hand = j['hand' + side];
-    for (let f = 0; f < 4; f++) {
-      const x = (f - 1.5) * 0.022;
-      part(hand, strandGeometry([[x, 0, 0], [x * 1.4, -0.12, 0.03], [x * 1.6, -0.24, 0.1]], { width: 0.012, thick: 0.8, segments: 6, radial: 4 }), bone, { outline: 0.003 });
-    }
-  }
-  // elongated head with blank face, glowing eyes and an impossible grin
-  part(j.head, headGeometry(0.12, { jaw: 0.55, height: 1.45, width: 0.85, chin: 0.03 }), skin, { outline: 0.007 });
-  for (const s of [1, -1]) part(j.head, new THREE.SphereGeometry(0.018, 10, 8), eye, { pos: [0.042 * s, 0.03, 0.095], scale: [1.4, 0.7, 0.5], outline: false });
-  const grin = new THREE.TorusGeometry(0.06, 0.008, 4, 18, Math.PI);
-  part(j.head, grin, flat(0x050206), { pos: [0, -0.04, 0.085], rot: [0, 0, Math.PI], scale: [1, 0.55, 1], outline: false });
-  for (let i = 0; i < 9; i++) {
-    const a = Math.PI + (i / 8) * Math.PI;
-    part(j.head, new THREE.ConeGeometry(0.006, 0.02, 4), teeth, { pos: [Math.cos(a) * 0.055, -0.04 + Math.sin(a) * 0.032 + 0.008, 0.09], rot: [0, 0, Math.PI], outline: false });
-  }
-  optimiseRig(j.root);
-  const animator = new HumanoidAnimator(j, 'dual');
-  const ctrl = makeController(j.root, M, {
+  const { M, vm, eyeMat } = buildThrall(STALKER_LOOK, { stance: {}, gait: { stride: 1, bounce: 1, sway: 1 } });
+  const ctrl = makeController(vm.root, M, {
     height: 2.4,
-    eyeMat: eye,
+    eyeMat,
     update(dt, s) {
       ctrl.tickFlash(dt);
       const t = s.t ?? 0;
@@ -328,17 +282,17 @@ function createNightStalker() {
       else if (s.action === 'hurt') action = { type: 'hurt', t };
       else if (s.action === 'dead') action = { type: 'dead', t };
       else if (s.action === 'lunge') action = { type: 'dash', t };
-      animator.update(dt, {
+      vm.update(dt, {
         speed: (s.speed ?? 0) * 0.9,
         sprint: (s.speed ?? 0) > 5,
         grounded: true,
         action,
         poseHook: (p, add, time) => {
           // hunched, twitching posture
-          add(p, 'spine', 0.55, 0, 0);
+          add(p, 'spine', 0.5, 0, 0);
           add(p, 'chest', 0.2, 0, Math.sin(time * 7.3) * 0.03);
-          add(p, 'neck', -0.5, 0, 0);
-          add(p, 'head', -0.25, Math.sin(time * 3.1) * 0.15, Math.sin(time * 11) * 0.06);
+          add(p, 'neck', -0.45, 0, 0);
+          add(p, 'head', -0.2, Math.sin(time * 3.1) * 0.15, Math.sin(time * 11) * 0.06);
           add(p, 'shoulderL', 0.25, 0, 0.12);
           add(p, 'shoulderR', 0.25, 0, -0.12);
           add(p, 'kneeL', 0.35);
@@ -361,60 +315,29 @@ function createNightStalker() {
 // ───────────────────────────────────────────── Blood Mage ───────────────────────────────────────
 
 function createBloodMage() {
-  const M = new MatSet();
-  const dims = { hipY: 1.0, thigh: 0.45, shin: 0.45, torso: 0.5, shoulderW: 0.19, hipW: 0.08, upperArm: 0.3, forearm: 0.27, neck: 0.06, headR: 0.11 };
-  const j = buildSkeleton(dims);
-  const robe = M.toon(0x2a0a14, { rim: 1.6 });
-  const robeDark = M.toon(0x140810, { rim: 1.2 });
-  const trim = M.toon(0x8a6a40);
+  const { M, vm, eyeMat } = buildThrall(MAGE_LOOK);
   const orbGlow = M.glow(0xff1638, 3.0);
-  const eye = M.glow(0xff3048, 3.4);
-  part(j.chest, lathe([[0.14, -0.12], [0.16, 0.0], [0.17, 0.14], [0.16, 0.24], [0.08, 0.3]], { scaleZ: 0.72 }), robe, { outline: 0.008 });
-  part(j.spine, lathe([[0.14, -0.05], [0.14, 0.12], [0.15, 0.24]], { scaleZ: 0.74 }), robe);
-  // floor-length robe with ragged hem (hides the legs)
-  const robeGeo = lathe([[0.15, 0.08], [0.18, -0.15], [0.25, -0.5], [0.34, -0.9], [0.38, -1.0]], { segments: 26, scaleZ: 0.85 });
-  const pos = robeGeo.attributes.position;
-  const rng = seeded(31);
-  for (let i = 0; i < pos.count; i++) if (pos.getY(i) < -0.95) pos.setY(i, pos.getY(i) + rng.range(0, 0.18));
-  robeGeo.computeVertexNormals();
-  part(j.skirt, robeGeo, robe, { outline: 0.008 });
-  part(j.skirt, robeGeo, M.toon(0x0a0508, { side: THREE.BackSide }), { scale: [0.98, 1, 0.98], outline: false });
-  part(j.spine, new THREE.TorusGeometry(0.15, 0.015, 6, 20), trim, { rot: [Math.PI / 2, 0, 0], scale: [1, 0.74, 1], outline: false });
-  for (let i = 0; i < 5; i++) part(j.chest, new THREE.BoxGeometry(0.02, 0.02, 0.01), M.glow(0xff2040, 1.6), { pos: [0, 0.2 - i * 0.06, 0.12], rot: [0, 0, Math.PI / 4], outline: false });
-  for (const side of ['L', 'R']) {
-    part(j['shoulder' + side], new THREE.SphereGeometry(0.075, 10, 8), robe, { outline: 0.006 });
-    part(j['shoulder' + side], limb(0.065, 0.075, dims.upperArm, 10), robe, { outline: 0.006 });
-    part(j['elbow' + side], limb(0.075, 0.11, dims.forearm, 10, 1), robe, { outline: 0.006 });
-    part(j['hand' + side], new THREE.SphereGeometry(0.035, 8, 6), M.toon(0xd8c6c6), { pos: [0, -0.03, 0], outline: 0.003 });
-  }
-  // deep hood with a shadowed face and two burning eyes
-  part(j.head, new THREE.SphereGeometry(0.17, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.68), robe, { rot: [-0.5, 0, 0], pos: [0, 0.02, -0.02], outline: 0.008 });
-  part(j.head, new THREE.ConeGeometry(0.1, 0.25, 10), robe, { pos: [0, 0.12, -0.14], rot: [-1.0, 0, 0], outline: 0.006 });
-  part(j.head, new THREE.SphereGeometry(0.115, 14, 10), flat(0x040204), { pos: [0, -0.01, 0.02] });
-  for (const s of [1, -1]) part(j.head, new THREE.SphereGeometry(0.014, 8, 6), eye, { pos: [0.035 * s, 0.0, 0.12], scale: [1.4, 0.8, 0.6], outline: false });
   // orbs in the hands + three orbiting blood orbs
   const handOrbs = [];
   for (const side of ['L', 'R']) {
     const o = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), orbGlow);
     o.position.set(0, -0.09, 0.03);
-    j['hand' + side].add(o);
+    vm.joints['hand' + side].add(o);
     handOrbs.push(o);
   }
   const orbit = new THREE.Group();
   orbit.position.y = 1.2;
-  j.root.add(orbit);
+  vm.root.add(orbit);
   for (let i = 0; i < 3; i++) {
     const o = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), orbGlow);
     const a = (i / 3) * Math.PI * 2;
     o.position.set(Math.cos(a) * 0.45, 0, Math.sin(a) * 0.45);
     orbit.add(o);
   }
-  optimiseRig(j.root);
-  const animator = new HumanoidAnimator(j, 'blades');
   let time = 0;
-  const ctrl = makeController(j.root, M, {
+  const ctrl = makeController(vm.root, M, {
     height: 2.0,
-    eyeMat: eye,
+    eyeMat,
     update(dt, s) {
       time += dt;
       ctrl.tickFlash(dt);
@@ -428,7 +351,7 @@ function createBloodMage() {
       else if (s.action === 'recover') action = { type: 'cast', t: 0.6 + t * 0.4 };
       else if (s.action === 'hurt') action = { type: 'hurt', t };
       else if (s.action === 'dead') action = { type: 'dead', t };
-      animator.update(dt, {
+      vm.update(dt, {
         speed: 0,
         grounded: true,
         action,

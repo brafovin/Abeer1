@@ -3,8 +3,21 @@
 import * as THREE from 'three';
 import { createHeroModel, createVillagerModel } from '../src/entities/models/CharacterModels.js';
 import { createEnemyModel } from '../src/entities/models/EnemyModels.js';
+import { createVampireModel } from '../src/entities/models/VampireModels.js';
+import { getRoster, SOVEREIGNS } from '../src/game/VampireRoster.js';
 const ENEMIES = ['crawler', 'crawler_big', 'knight', 'stalker', 'mage', 'countess'];
-const make = (m) => ENEMIES.includes(m) ? createEnemyModel(m) : ['elda', 'tomas', 'aldric'].includes(m) ? createVillagerModel(m) : createHeroModel(m, q.get('cos') || 'default');
+// court vampires: v:<archetype>:<m|f>:<n> (n-th match in the roster), v:id:<roster id>, v:dravik / v:nyxara
+const courtModel = (m) => {
+  const [, a, g, n] = m.split(':');
+  if (a === 'dravik' || a === 'nyxara') return createVampireModel(SOVEREIGNS[a].appearance, { scale: 1.1 });
+  const roster = getRoster();
+  if (a === 'id') return createVampireModel(roster[+g].appearance);
+  const hits = roster.filter((v) => v.archetype === a && v.female === (g === 'f'));
+  const v = hits[(+n || 0) % hits.length];
+  console.log(m, v.name, v.title, v.appearance.weapon, v.appearance.headgear, v.appearance.back, v.appearance.hair, v.appearance.marks.join('+'));
+  return createVampireModel(v.appearance);
+};
+const make = (m) => m.startsWith('v:') ? courtModel(m) : ENEMIES.includes(m) ? createEnemyModel(m) : ['elda', 'tomas', 'aldric'].includes(m) ? createVillagerModel(m) : createHeroModel(m, q.get('cos') || 'default');
 
 const q = new URLSearchParams(location.search);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -17,8 +30,9 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1420);
 const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.05, 100);
 const zoom = q.get('zoom') === 'face';
-camera.position.set(0, zoom ? 1.68 : 1.1, zoom ? 0.9 : 4.6);
-camera.lookAt(0, zoom ? 1.68 : 0.95, 0);
+const fy = parseFloat(q.get('fy') || '1.68');
+camera.position.set(0, zoom ? fy : 1.1, zoom ? parseFloat(q.get('fz') || '0.9') : 4.6);
+camera.lookAt(0, zoom ? fy : 0.95, 0);
 scene.add(new THREE.HemisphereLight(0x8a90b0, 0x301018, 1.2));
 const key = new THREE.DirectionalLight(0xffeef0, 2.2);
 key.position.set(2, 4, 3);

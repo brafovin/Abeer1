@@ -84,8 +84,23 @@ through quests and can be worn from the menu or the Inventory.
 
 ### The vampire court (Castle Nocturne)
 - **1,024 unique vampires**, each with their own name, house, level, title, personality and greeting.
-  Each also has a look (male or female; hair style and colour; eyes; outfit and palette; accessories;
-  weapon) and **one of 12 vampire powers**.
+  Each also has a look (male or female; face shape; hair style and colour; eyes; outfit and palette;
+  headgear; weapon; body type) and **one of 12 vampire powers**.
+- **Six vampire archetypes** share the game's dark-gothic art style (pale skin, glowing red eyes, fangs,
+  gothic gear) but differ in body type, face, kit, silhouette, weapon and fighting stance:
+
+  | Archetype | Look | Weapons | Plays like |
+  | --- | --- | --- | --- |
+  | **Noble** | Elegant coats, gowns and corsets | Swords, rapiers, blood blades | Balanced |
+  | **Vampire Lord / Lady** | Tall and broad, crowns or horns, fur mantle or tall collar, long cape, sometimes wings | Greatsword, scythe, sword | Tough, hard-hitting, slow |
+  | **Blood Warrior** | Heavy plate, pauldrons, helms and plumes, scars and war paint | Axe, spear, greatsword, sword and shield | Very tough, long reach |
+  | **Night Assassin** | Slim, hooded, harness and throwing knives, ragged cloak, low crouching stance | Daggers, katana, claws | Fragile, fast, hits hard |
+  | **Blood Sorcerer** | Robes, bell sleeves, runes on the face, a spinning sigil halo | Staff, floating blades | Fights from range |
+  | **Ancient One** | Gaunt and hunched, grey skin, ribs and veins, hollow eyes, antlers or horns, bat wings, bone claws | Claws, scythe | The toughest and most dangerous |
+
+  The oldest court members (level 30+) are mostly Ancients and Lords. An archetype also biases which of
+  the 12 powers a vampire carries (assassins favour Mist Step and Shadow Claw, warriors Iron Blood and
+  Beast Rage, and so on) and changes their health, damage and speed.
 - Walk up to any vampire and press **F**:
   - **Befriend**: they become an ally. Up to **3** follow you everywhere and fight beside you, using
     their power. Other allies wait at the court; swap them in *Inventory → Court & Allies*.
@@ -98,8 +113,10 @@ through quests and can be worn from the menu or the Inventory.
   them together. When one falls, the other becomes enraged. Defeating them grants their unique powers.
 
 Rendering 1,024 fully animated characters at once is not possible in a browser. Nearby vampires (up to
-14 at a time) are built as full animated anime models as you approach; the rest of the crowd is drawn
-as lightweight instanced silhouettes that turn into full models when you get close.
+14 at a time) are built as full animated 3D models as you approach; the rest of the crowd is drawn
+as lightweight instanced silhouettes (with their own body width, capes and wings) that turn into full
+models when you get close. The Hollow Knight, Night Stalker and Blood Mage are fallen vampires built
+from the same kit, so every humanoid in the game shares one style.
 
 ### Systems
 - **Stats and progression**: health, stamina, Blood Energy and XP. Levels give 2 attribute points
@@ -146,6 +163,8 @@ src/entities/              Player, Enemy (AI), Boss (Countess, Sovereigns), Cour
                            characters.js (character data)
 src/entities/models/       Toon.js (cel shading, outlines, hair strands), Humanoid.js (rig + animator),
                            CharacterModels.js (heroes, villagers), EnemyModels.js, VampireModels.js
+                           (court vampires), VampireGear.js (armour, wings, headgear, weapons, face marks),
+                           archetypes.js (archetype data and look generator, no three.js)
 src/combat/                Combat helpers, Abilities, Projectiles, Effects (particles, slashes, telegraphs)
 src/game/                  Quests, Inventory, Story (notes, lines, endings), Horror director,
                            VampireRoster (1,024 vampires), Court (befriend/duel/renounce), Powers
@@ -159,8 +178,10 @@ dev/preview.html           developer model viewer (see below)
 ### Developer model viewer
 With the dev server running, open
 `http://localhost:5173/dev/preview.html?models=lucien,seraphina,kairo` to inspect models. Other
-models: `crawler,knight,stalker,mage,countess,elda,tomas,aldric`. Parameters: `cos=silver_moon`,
-`yaw=0.6`, `zoom=face`, `action=attack&t=0.45`.
+models: `crawler,knight,stalker,mage,countess,elda,tomas,aldric`. Court vampires:
+`v:<archetype>:<m|f>:<n>` (for example `v:ancient:f:0`, `v:lord:m:2`), `v:id:<court id>`, `v:dravik`,
+`v:nyxara`. Parameters: `cos=silver_moon`, `yaw=0.6`, `zoom=face` (with `fy=` and `fz=` for the
+camera), `action=attack&t=0.45`, `speed=6`.
 
 For automated testing, the game is exposed as `window.__game`; `__game.advance(seconds)` steps the
 simulation without waiting for real time.
@@ -185,8 +206,10 @@ simulation without waiting for real time.
 ---
 
 ## Known limitations
-- Characters are stylised procedural models (layered geometry, cel shading, ink outlines and strand
-  hair), not hand-sculpted or rigged meshes. Animation is procedural rather than motion-captured.
+- Characters are stylised procedural 3D models (layered geometry, cel shading, ink outlines and strand
+  hair), not hand-sculpted or rigged meshes, and not photorealistic. They are real animated 3D rigs,
+  not images, and animation is procedural rather than motion-captured. You can swap in glTF models
+  (see below).
 - Only nearby court vampires are fully animated (see above). Allies and duellists are full models.
 - The terrain is mostly flat ground with collision; you cannot climb onto props.
 - Headless or software-rendered browsers run the game very slowly. Use a GPU-accelerated browser.

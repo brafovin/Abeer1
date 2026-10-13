@@ -139,10 +139,12 @@ export function buildFace(head, r, f) {
     head.add(brow);
   }
   // nose: tiny soft wedge
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.0065, 0.022, 4), toon(f.skin));
-  nose.position.set(0, eyeY - 0.03, r * 0.98);
-  nose.rotation.x = 0.35;
-  head.add(nose);
+  if (!f.noNose) {
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.0065, 0.022, 4), toon(f.skin));
+    nose.position.set(0, eyeY - 0.03, r * 0.98);
+    nose.rotation.x = 0.35;
+    head.add(nose);
+  }
   // mouth
   const mouthY = eyeY - (f.mouthDrop ?? 0.062);
   if (f.lips) {
@@ -155,7 +157,7 @@ export function buildFace(head, r, f) {
     lower.scale.set(0.01, 0.0042, 0.0045);
     lower.position.set(0, mouthY - 0.004, r * 0.855);
     head.add(lower);
-  } else {
+  } else if (!f.noMouth) {
     const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.0016, 4, 10, Math.PI * 0.8), lashMat);
     mouth.rotation.set(0, 0, Math.PI + 0.3 + (f.smirk ?? 0));
     mouth.position.set(0.002, mouthY + 0.006, r * 0.865);
@@ -464,6 +466,8 @@ export class HumanoidAnimator {
     this.baseHipsY = joints.hips.position.y;
     this.female = !!opts.female;
     this.predator = !!opts.vampire;
+    this.stance = opts.stance ?? null;
+    this.gait = { stride: 1, bounce: 1, sway: 1, ...(opts.gait ?? {}) };
     this.sway = 0;
     this.prevYaw = 0;
   }
@@ -489,6 +493,40 @@ export class HumanoidAnimator {
       addRot(p, 'thighR', 0, 0, -0.06);
     }
     this.lib.idleArms(p, br);
+    const st = this.stance;
+    if (st) {
+      // archetype posture: hunched ancients, proud lords, wide-stanced warriors, crouching assassins
+      addRot(p, 'chest', st.chest ?? 0, 0, 0);
+      addRot(p, 'spine', (st.chest ?? 0) * 0.5, 0, 0);
+      addRot(p, 'head', (st.head ?? 0) - (st.chest ?? 0) * 0.6, 0, 0);
+      if (st.crouch) {
+        const c = st.crouch;
+        p.hipsY -= c * 0.7;
+        addRot(p, 'thighL', -c * 4);
+        addRot(p, 'thighR', -c * 4);
+        addRot(p, 'kneeL', c * 8);
+        addRot(p, 'kneeR', c * 8);
+      }
+      if (st.wide) {
+        addRot(p, 'shoulderL', 0, 0, st.wide);
+        addRot(p, 'shoulderR', 0, 0, -st.wide);
+        addRot(p, 'thighL', 0, 0, st.wide * 0.4);
+        addRot(p, 'thighR', 0, 0, -st.wide * 0.4);
+      }
+      if (st.dangle) {
+        addRot(p, 'shoulderL', 0.28 + Math.sin(this.time * 0.8) * 0.03, 0, 0.1);
+        addRot(p, 'shoulderR', 0.28 + Math.sin(this.time * 0.8 + 1) * 0.03, 0, -0.1);
+        addRot(p, 'elbowL', -0.3);
+        addRot(p, 'elbowR', -0.3);
+        addRot(p, 'handL', -0.35 + Math.sin(this.time * 1.6) * 0.1);
+        addRot(p, 'handR', -0.35 + Math.sin(this.time * 1.6 + 2) * 0.1);
+      }
+      if (st.casting) {
+        addRot(p, 'shoulderL', -0.45 + br * 0.03, 0, 0.1);
+        addRot(p, 'elbowL', -0.8);
+        addRot(p, 'handL', -0.3, 0, 0);
+      }
+    }
     if (this.predator) {
       // stalking stance: head low and forward, slow uneven tilt with an occasional twitch
       const tw = Math.sin(this.time * 0.9) > 0.985 ? Math.sin(this.time * 40) * 0.08 : 0;
@@ -503,7 +541,8 @@ export class HumanoidAnimator {
       const sprint = s.sprint ? 1 : 0;
       this.phase += dt * (3.0 + speed * 1.05);
       const ph = this.phase;
-      const stride = 0.45 + 0.25 * sprint;
+      const gt = this.gait;
+      const stride = (0.45 + 0.25 * sprint) * gt.stride;
       const w = Math.min(1, moveW);
       addRot(p, 'thighL', -Math.sin(ph) * stride * w, 0, 0);
       addRot(p, 'thighR', Math.sin(ph) * stride * w, 0, 0);
@@ -514,7 +553,12 @@ export class HumanoidAnimator {
       addRot(p, 'elbowL', -0.3 * w * sprint);
       addRot(p, 'spine', 0.08 * w + 0.18 * sprint, Math.sin(ph) * 0.08 * w, 0);
       addRot(p, 'hips', 0, -Math.sin(ph) * 0.1 * w, 0);
-      p.hipsY += -Math.abs(Math.cos(ph)) * 0.035 * w - 0.02 * sprint;
+      p.hipsY += -Math.abs(Math.cos(ph)) * 0.035 * w * gt.bounce - 0.02 * sprint;
+      if (gt.sway !== 1) {
+        // heavy stomp or lurching gait
+        addRot(p, 'body', 0, 0, Math.sin(ph) * 0.045 * (gt.sway - 1) * w);
+        addRot(p, 'spine', 0, Math.sin(ph) * 0.06 * (gt.sway - 1) * w, 0);
+      }
       addRot(p, 'skirt', 0.1 * w + 0.12 * sprint, 0, Math.sin(ph) * 0.05);
       addRot(p, 'cape', 0.35 * w + 0.4 * sprint, 0, Math.sin(ph * 0.5) * 0.08);
       addRot(p, 'hair', 0.12 * w + 0.15 * sprint, 0, 0);

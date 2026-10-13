@@ -4,6 +4,7 @@
 //   hostile — duels the player (and their allies); killing it steals its power
 import * as THREE from 'three';
 import { createVampireModel } from './models/VampireModels.js';
+import { ARCHETYPES } from './models/archetypes.js';
 import { meleeArc, playerTargets, enemyTargets } from '../combat/Combat.js';
 import { POWERS } from '../game/Powers.js';
 import { angleDiff, clamp, damp, dampAngle, rand, yawTo } from '../core/utils.js';
@@ -26,9 +27,13 @@ export class CourtVampire {
     this.yaw = yaw;
     this.radius = 0.45;
     this.height = 1.85;
-    this.maxHp = Math.round(150 + data.level * 24);
+    // archetype modifiers: warriors and ancients are tougher, assassins hit hard and move fast, lords are slow bruisers
+    const arch = (ARCHETYPES[data.archetype] ?? ARCHETYPES.noble).stats;
+    this.maxHp = Math.round((150 + data.level * 24) * arch.hp);
     this.hp = this.maxHp;
-    this.damage = 9 + data.level * 1.5;
+    this.damage = (9 + data.level * 1.5) * arch.dmg;
+    this.spdMul = arch.spd;
+    this.reach = this.model.reach ?? 1;
     this.alive = true;
     this.hostile = mode === 'hostile';
     this.state = 'idle';
@@ -50,7 +55,7 @@ export class CourtVampire {
     this.model.root.position.copy(this.position);
     this.model.root.rotation.y = yaw;
     game.scene.add(this.model.root);
-    this.ranged = data.appearance.weapon === 'blades';
+    this.ranged = !!this.model.ranged;
     this.telegraph = null;
   }
 
@@ -180,7 +185,7 @@ export class CourtVampire {
     }
 
     // movement
-    const s = this.rootT > 0 ? 0 : speed * this.slowF;
+    const s = this.rootT > 0 ? 0 : speed * this.slowF * this.spdMul;
     if (moveDir && s > 0) {
       this.velocity.x = damp(this.velocity.x, moveDir.x * s, 9, dt);
       this.velocity.z = damp(this.velocity.z, moveDir.z * s, 9, dt);
@@ -248,7 +253,7 @@ export class CourtVampire {
           g.audio.play('blade_throw', { pos: this.position, volume: 0.5 });
           action = { type: 'cast', t: 0.4 };
         }
-      } else if (dist > 2.2) {
+      } else if (dist > 2.2 * this.reach) {
         moveDir = new THREE.Vector3(Math.sin(toYaw), 0, Math.cos(toYaw));
         speed = 6;
       } else if (this.cooldown <= 0) {
@@ -339,13 +344,13 @@ export class CourtVampire {
         moveDir = new THREE.Vector3(Math.cos(toYaw) * sgn, 0, -Math.sin(toYaw) * sgn);
         speed = 3;
       }
-    } else if (dist > 2.3) {
+    } else if (dist > 2.3 * this.reach) {
       moveDir = new THREE.Vector3(Math.sin(toYaw), 0, Math.cos(toYaw));
       speed = 5.8;
     } else if (this.cooldown <= 0) {
       this.state = 'windup';
       this.stateT = 0;
-      const c = this.position.clone().add(new THREE.Vector3(Math.sin(this.yaw) * 1.3, 0, Math.cos(this.yaw) * 1.3));
+      const c = this.position.clone().add(new THREE.Vector3(Math.sin(this.yaw) * 1.3 * this.reach, 0, Math.cos(this.yaw) * 1.3 * this.reach));
       this.telegraph = g.effects.telegraph(c, 1.9, 0.45, { color: 0xff2a3a });
       g.audio.play('enemy_attack', { pos: this.position, pitch: this.data.female ? 1.25 : 0.95, volume: 0.7 });
     }
@@ -363,9 +368,9 @@ export class CourtVampire {
         this.state = 'strike';
         this.stateT = 0;
         g.audio.play('swing', { pos: this.position, pitch: 0.9 + Math.random() * 0.2 });
-        g.effects.slash(this.position.clone().setY(this.position.y + 1.05), this.yaw, { color: new THREE.Color(this.data.appearance.accent).getHex(), radius: 2.4, arc: 2.2, duration: 0.22, sweep: this.comboStep % 2 ? -1 : 1 });
+        g.effects.slash(this.position.clone().setY(this.position.y + 1.05), this.yaw, { color: new THREE.Color(this.data.appearance.accent).getHex(), radius: 2.4 * this.reach, arc: 2.2, duration: 0.22, sweep: this.comboStep % 2 ? -1 : 1 });
         const targets = source === 'enemy' ? enemyTargets(g) : this.foes();
-        meleeArc(g, this.position, this.yaw, 2.6, 2.2, this.damage * (source === 'ally' ? 0.9 : 1), { source, attacker: this, targets, knockback: 3, noHitStop: true });
+        meleeArc(g, this.position, this.yaw, 2.6 * this.reach, 2.2, this.damage * (source === 'ally' ? 0.9 : 1), { source, attacker: this, targets, knockback: 3, noHitStop: true });
         this.velocity.x += Math.sin(this.yaw) * 3;
         this.velocity.z += Math.cos(this.yaw) * 3;
       }

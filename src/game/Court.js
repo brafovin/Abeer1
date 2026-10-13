@@ -120,15 +120,19 @@ export class Court {
       const head = mk(geo.head, new THREE.MeshLambertMaterial({ color: 0xf0dcd8 }));
       const hair = mk(geo.hair, new THREE.MeshLambertMaterial({ color: 0xffffff }));
       const eyes = mk(geo.eyes, new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff2030).multiplyScalar(2.5), toneMapped: false }));
+      const cape = mk(geo.cape, new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+      const wings = mk(geo.wings, new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
       const col = new THREE.Color();
       ids.forEach((id, i) => {
         const a = this.roster[id].appearance;
+        cape.setColorAt(i, col.set(a.main).lerp(new THREE.Color(a.accent), 0.25));
+        wings.setColorAt(i, col.set(a.main).multiplyScalar(0.7));
         body.setColorAt(i, col.set(a.main).lerp(new THREE.Color(a.accent), 0.15));
         hair.setColorAt(i, col.set(a.hairTip));
         head.setColorAt(i, col.set(a.skin));
         eyes.setColorAt(i, col.set(a.eye).multiplyScalar(2.5));
       });
-      return { ids, body, head, hair, eyes, index: new Map(ids.map((id, i) => [id, i])) };
+      return { ids, body, head, hair, eyes, cape, wings, index: new Map(ids.map((id, i) => [id, i])) };
     };
     this.crowd = { group, m: make('m'), f: make('f'), phase: Math.random() * 10, dirty: true };
     area.group.add(group);
@@ -157,7 +161,9 @@ export class Court {
           const sway = Math.sin(time * 1.3 + id) * 0.05;
           const bob = Math.abs(Math.sin(time * 2 + id * 1.7)) * 0.015;
           q.setFromAxisAngle(up, slot.yaw + sway);
-          s.setScalar(this.roster[id].appearance.heightScale ?? 1);
+          const ap = this.roster[id].appearance;
+          const hs = ap.heightScale ?? 1, ws = hs * Math.pow(ap.build?.b ?? 1, 0.65);
+          s.set(ws, hs, ws);
           p.set(slot.x, slot.y + bob, slot.z);
           m4.compose(p, q, s);
         }
@@ -165,9 +171,12 @@ export class Court {
         set.head.setMatrixAt(i, m4);
         set.hair.setMatrixAt(i, m4);
         set.eyes.setMatrixAt(i, m4);
+        const back = this.roster[id].appearance.back;
+        set.cape.setMatrixAt(i, !hidden && (back === 'cape' || back === 'bigCape' || back === 'cloak' || back === 'wingsCape') ? m4 : zero);
+        set.wings.setMatrixAt(i, !hidden && (back === 'wings' || back === 'wingsCape') ? m4 : zero);
         changed = true;
       });
-      if (changed) for (const k of ['body', 'head', 'hair', 'eyes']) set[k].instanceMatrix.needsUpdate = true;
+      if (changed) for (const k of ['body', 'head', 'hair', 'eyes', 'cape', 'wings']) set[k].instanceMatrix.needsUpdate = true;
     }
   }
 
