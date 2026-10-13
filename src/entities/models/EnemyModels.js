@@ -523,7 +523,7 @@ function createCountess() {
   j.head.add(veil);
   optimiseRig(j.root);
   j.root.scale.setScalar(1.38);
-  const animator = new HumanoidAnimator(j, 'blades', { female: true });
+  const animator = new HumanoidAnimator(j, 'blades', { female: true, vampire: true });
   let time = 0;
   const ctrl = makeController(j.root, M, {
     height: 2.7,

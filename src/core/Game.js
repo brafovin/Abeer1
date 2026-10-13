@@ -305,12 +305,12 @@ export class Game {
       if (l.target) scene.remove(l.target);
     }
     this.envLights = [];
-    const amb = new THREE.AmbientLight(env.ambient, env.ambientIntensity * 2.6);
+    const amb = new THREE.AmbientLight(env.ambient, env.ambientIntensity * 2.3);
     const hemi = new THREE.HemisphereLight(env.hemiSky, env.hemiGround, env.hemiIntensity * 3.2);
     this.envLights.push(amb, hemi);
     if (env.moonLight) {
       const m = env.moonLight;
-      const dir = new THREE.DirectionalLight(m.color, m.intensity * 1.8);
+      const dir = new THREE.DirectionalLight(m.color, m.intensity * 2.0);
       dir.userData.offset = new THREE.Vector3(...m.dir).normalize().multiplyScalar(40);
       dir.shadow.mapSize.set(this.renderer.quality.shadowSize, this.renderer.quality.shadowSize);
       const sc = dir.shadow.camera;
@@ -332,7 +332,7 @@ export class Game {
     for (const l of this.envLights) scene.add(l);
     this.applyEnvShadows();
     RIM.color.value.set(env.rimColor);
-    RIM.strength.value = env.rimStrength ?? 0.55;
+    RIM.strength.value = Math.min(1, (env.rimStrength ?? 0.55) * 1.3); // stronger cold rim for pale vampire skin
     this.renderer.renderer.toneMappingExposure = env.exposure ?? 1.05;
     this.renderer.setScene(scene, this.camera);
     this.renderer.resize();

@@ -73,8 +73,11 @@ export function buildFace(head, r, f) {
   const eyeY = f.eyeY ?? -0.012;
   const eyeX = f.eyeX ?? 0.04;
   const eyeZ = r * 0.93;
-  const irisMat = glow(f.eyeColor, f.eyeGlow ?? 2.6);
-  const whiteMat = flat(f.sclera ?? 0xefe2e6);
+  const vamp = !!(f.fangs || f.vampire);
+  // vampires: hotter eye glow and faintly bloodshot sclera
+  const irisMat = glow(f.eyeColor, (f.eyeGlow ?? 2.6) * (vamp ? 1.3 : 1));
+  const whiteMat = flat(f.sclera ?? (vamp ? 0xf0d2d6 : 0xefe2e6));
+  const shadowMat = vamp ? flat(f.shadow ?? 0x5b2a3c) : null;
   const lashMat = flat(f.lash ?? 0x0b0709);
   const pupilMat = flat(0x1a0508);
   const hiMat = glow(0xffffff, 1.4);
@@ -116,6 +119,19 @@ export function buildFace(head, r, f) {
     const low = new THREE.Mesh(new THREE.BoxGeometry(eyeW * 1.1, 0.0012, 0.001), lashMat);
     low.position.set(0, -eyeH * 0.82, 0.0015);
     eye.add(low);
+    if (shadowMat) {
+      // sunken, sleepless under-eye shadow and a dark crease above the lid
+      const under = new THREE.Mesh(new THREE.TorusGeometry(1, 0.13, 4, 14, Math.PI), shadowMat);
+      under.rotation.z = Math.PI;
+      under.scale.set(eyeW * 0.95, eyeH * 0.55, 0.01);
+      under.position.set(0.001 * side, -eyeH * 0.62, 0.0006);
+      eye.add(under);
+      const crease = new THREE.Mesh(new THREE.TorusGeometry(1, 0.07, 4, 14, Math.PI * 0.8), shadowMat);
+      crease.rotation.z = Math.PI * 0.1;
+      crease.scale.set(eyeW * 1.0, eyeH * 1.25, 0.01);
+      crease.position.set(0, eyeH * 0.1, 0.0005);
+      eye.add(crease);
+    }
     // brow
     const brow = new THREE.Mesh(new THREE.BoxGeometry(eyeW * 1.6, f.browThick ?? 0.0032, 0.004), lashMat);
     brow.position.set(eyeX * side * 1.02, eyeY + (f.browY ?? 0.03), eyeZ - 0.005);
@@ -146,12 +162,21 @@ export function buildFace(head, r, f) {
     head.add(mouth);
   }
   if (f.fangs) {
+    // long, needle-sharp canines that hang past the lower lip, with a hint of blood at the tips
     const fangMat = flat(0xfbf6f2);
+    const tipMat = glow(0x9a0a1a, 0.6);
+    const len = f.fangLen ?? 0.017;
+    const top = f.lips ? mouthY - 0.001 : mouthY + 0.002;
     for (const s of [1, -1]) {
-      const fang = new THREE.Mesh(new THREE.ConeGeometry(0.0022, 0.009, 5), fangMat);
-      fang.rotation.x = Math.PI;
-      fang.position.set(0.0065 * s, mouthY - 0.002, r * 0.872);
+      const fang = new THREE.Mesh(new THREE.ConeGeometry(0.0028, len, 6), fangMat);
+      fang.rotation.x = Math.PI - 0.12;
+      fang.rotation.z = 0.08 * s;
+      fang.position.set(0.0068 * s, top - len * 0.5, r * 0.874);
       head.add(fang);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.0009, 0.0035, 5), tipMat);
+      tip.rotation.x = Math.PI - 0.12;
+      tip.position.set(0.0068 * s + 0.0008 * s, top - len + 0.0012, r * 0.876);
+      head.add(tip);
     }
   }
   return { irisMat };
@@ -438,6 +463,7 @@ export class HumanoidAnimator {
     this.phase = 0;
     this.baseHipsY = joints.hips.position.y;
     this.female = !!opts.female;
+    this.predator = !!opts.vampire;
     this.sway = 0;
     this.prevYaw = 0;
   }
@@ -463,6 +489,14 @@ export class HumanoidAnimator {
       addRot(p, 'thighR', 0, 0, -0.06);
     }
     this.lib.idleArms(p, br);
+    if (this.predator) {
+      // stalking stance: head low and forward, slow uneven tilt with an occasional twitch
+      const tw = Math.sin(this.time * 0.9) > 0.985 ? Math.sin(this.time * 40) * 0.08 : 0;
+      addRot(p, 'chest', 0.05, 0, 0);
+      addRot(p, 'head', 0.08, Math.sin(this.time * 0.23) * 0.1, Math.sin(this.time * 0.31 + 1.3) * 0.12 + tw);
+      addRot(p, 'shoulderL', 0.05, 0, 0.04);
+      addRot(p, 'shoulderR', 0.05, 0, -0.04);
+    }
 
     // ── locomotion
     if (s.grounded !== false && speed > 0.15) {
@@ -510,6 +544,12 @@ export class HumanoidAnimator {
       if (a.type === 'attack') {
         const atk = this.lib.attacks[a.index % this.lib.attacks.length];
         applyTracks(p, atk, t);
+        if (this.predator) {
+          // bite lunge: the head snaps forward and down through the strike, then recoils
+          const k = Math.sin(clamp((t - 0.15) / 0.55, 0, 1) * Math.PI);
+          addRot(p, 'chest', 0.18 * k, 0, 0);
+          addRot(p, 'head', 0.3 * k, 0, 0.1 * k);
+        }
         // cancel locomotion arm swing a bit for readability
         lambda = 26;
       } else if (a.type === 'heavy' && this.lib.heavy) {

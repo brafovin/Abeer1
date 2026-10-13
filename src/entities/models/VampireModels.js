@@ -204,7 +204,7 @@ export function createVampireModel(a, opts = {}) {
   const rng = seeded(a.seed ?? 1);
   const c = {
     main: a.main, accent: a.accent, dark: a.dark ?? 0x111015, trim: a.trim ?? 0xc0c4cf, shirt: a.shirt ?? 0x1d1b23, pants: a.pants ?? 0x17151c,
-    skin: a.skin ?? 0xf4dfd8, hairRoot: a.hairRoot, hairTip: a.hairTip, hairHighlight: a.hairHighlight ?? a.hairTip, eye: a.eye,
+    skin: a.skin ?? 0xe9e4ec, hairRoot: a.hairRoot, hairTip: a.hairTip, hairHighlight: a.hairHighlight ?? a.hairTip, eye: a.eye,
   };
   if (female) femaleOutfit(j, c, a.outfit);
   else maleOutfit(j, c, a.outfit);
@@ -218,8 +218,8 @@ export function createVampireModel(a, opts = {}) {
   part(j.head, headGeometry(R, { jaw: female ? 0.42 : 0.4, width: female ? 0.88 : 0.9 }), toon(c.skin, { rim: 0.6 }), { outline: 0.0035 });
   buildEars(j.head, R, c.skin, female ? 1.2 : 0.6);
   buildFace(j.head, R, female
-    ? { eyeColor: c.eye, skin: c.skin, eyeTilt: 0.14, browAngle: 0.05, browY: 0.03, browThick: 0.0024, lidHeavy: 1.15, wing: true, slit: true, lips: a.lips ?? 0x8e1428, eyeW: 0.025, eyeH: 0.0165, eyeX: 0.039 }
-    : { eyeColor: c.eye, skin: c.skin, eyeTilt: 0.18, browAngle: -0.2, browY: 0.026, lidHeavy: 1.1, slit: true, fangs: a.fangs !== false, smirk: rng.range(-0.2, 0.3), eyeW: 0.023, eyeH: 0.0145 });
+    ? { eyeColor: c.eye, skin: c.skin, eyeTilt: 0.14, browAngle: 0.05, browY: 0.03, browThick: 0.0024, lidHeavy: 1.15, wing: true, slit: true, lips: a.lips ?? 0x5e0a1c, fangs: a.fangs !== false, fangLen: 0.014, eyeW: 0.025, eyeH: 0.0165, eyeX: 0.039 }
+    : { eyeColor: c.eye, skin: c.skin, eyeTilt: 0.18, browAngle: -0.28, browY: 0.024, browThick: 0.0038, lidHeavy: 1.1, slit: true, fangs: a.fangs !== false, smirk: rng.range(-0.2, 0.3), eyeW: 0.023, eyeH: 0.0145 });
   const style = HAIR[a.hair] ? a.hair : female ? 'long' : 'messy';
   HAIR[style](j.hair, c, R, rng);
   // accessories
@@ -301,7 +301,7 @@ export function createVampireModel(a, opts = {}) {
   optimiseRig(j.root, { outlines: opts.outlines !== false });
   const scale = (opts.scale ?? 1) * (a.heightScale ?? 1);
   j.root.scale.setScalar(scale);
-  const animator = new HumanoidAnimator(j, style2, { female });
+  const animator = new HumanoidAnimator(j, style2, { female, vampire: true });
   const mats = [];
   j.root.traverse((o) => {
     if (o.isMesh) o.castShadow = !o.userData.isOutline;

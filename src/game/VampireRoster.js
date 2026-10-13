@@ -50,18 +50,18 @@ const HAIR_COLORS = [
   { root: 0x2a1a14, tip: 0x4a2e22, hi: 0x6a4030, name: 'dark auburn' },
   { root: 0x101820, tip: 0x283a4e, hi: 0x4a6a8a, name: 'storm blue' },
 ];
-const EYES = [0xff1f3a, 0xff1b3d, 0xff3a1a, 0xffb020, 0xc04cff, 0x7fd8ff, 0xff2a6a];
+const EYES = [0xff1f3a, 0xff1b3d, 0xff3a1a, 0xff0f24, 0xff2a2a, 0xe8102e, 0xff2a4a];
 const PALETTES = [
   { main: 0x131118, accent: 0x7d0c1d, dark: 0x0e0c12, trim: 0xb9bfcb, name: 'black & crimson' },
-  { main: 0x9a1529, accent: 0xd0142e, dark: 0x111015, trim: 0xc0c4cf, name: 'crimson rose' },
-  { main: 0x2b1640, accent: 0xa04cff, dark: 0x120a1c, trim: 0xc8bfe0, name: 'violet court' },
-  { main: 0xd3d6df, accent: 0x283453, dark: 0x2a2833, trim: 0x8a93a9, name: 'moon white' },
+  { main: 0x5a0a17, accent: 0xb0102a, dark: 0x111015, trim: 0xc0c4cf, name: 'crimson rose' },
+  { main: 0x1c0e2a, accent: 0x7a2ab8, dark: 0x120a1c, trim: 0xc8bfe0, name: 'violet court' },
+  { main: 0x22232c, accent: 0x6a0a18, dark: 0x0c0c10, trim: 0x8a93a9, name: 'grave ash' },
   { main: 0x5c0915, accent: 0xd3a65a, dark: 0x140f13, trim: 0xd3a65a, name: 'burgundy & gold' },
-  { main: 0x16202e, accent: 0x4f8dff, dark: 0x0c1018, trim: 0xa8b4c8, name: 'navy & silver' },
-  { main: 0x1a1a1a, accent: 0x3aff9a, dark: 0x0a0a0a, trim: 0x9aa0a0, name: 'absinthe' },
+  { main: 0x0f141d, accent: 0x5a0e1e, dark: 0x0c1018, trim: 0xa8b4c8, name: 'navy & silver' },
+  { main: 0x141214, accent: 0x8a0a1c, dark: 0x080708, trim: 0x9aa0a0, name: 'mourning black' },
   { main: 0x3a0a26, accent: 0xff4a8a, dark: 0x16060f, trim: 0xd0a0b8, name: 'nightshade' },
 ];
-const SKINS = [0xf4dfd8, 0xf6e3dd, 0xead2cc, 0xe0c2b4, 0xd8b4a4, 0xc8a090, 0xf0e8ee];
+const SKINS = [0xebe5ec, 0xefe7ee, 0xe4dde6, 0xddd4dc, 0xd6ccd4, 0xcfc4cc, 0xf2eef4];
 
 function titleFor(level, female) {
   if (level >= 30) return female ? 'Countess' : 'Count';

@@ -13,7 +13,7 @@ export const COSMETICS = {
       desc: 'Black gothic coat lined in blood-red silk, silver clasps.',
       colors: {
         coat: 0x131118, lining: 0x7d0c1d, trim: 0xb9bfcb, shirt: 0x1d1b23, pants: 0x17151c, boots: 0x0d0b10,
-        gloves: 0x0f0e13, hairRoot: 0x121217, hairTip: 0x4a4e5c, hairStreak: 0x9fa6b8, eye: 0xff1f3a, skin: 0xf4dfd8,
+        gloves: 0x0f0e13, hairRoot: 0x121217, hairTip: 0x4a4e5c, hairStreak: 0x9fa6b8, eye: 0xff1f3a, skin: 0xebe5ec,
         blade: 0x18161f, bladeGlow: 0xff1030, gem: 0xff1030,
       },
     },
@@ -22,7 +22,7 @@ export const COSMETICS = {
       desc: 'A moon-white coat of a forgotten royal guard. Unlocked by recovering every hidden relic.',
       colors: {
         coat: 0xd3d6df, lining: 0x283453, trim: 0x8a93a9, shirt: 0x24212d, pants: 0x2a2833, boots: 0x15131a,
-        gloves: 0xe4e6ec, hairRoot: 0x1a1b22, hairTip: 0x9ba2b5, hairStreak: 0xdfe3ee, eye: 0xff2a48, skin: 0xf4dfd8,
+        gloves: 0xe4e6ec, hairRoot: 0x1a1b22, hairTip: 0x9ba2b5, hairStreak: 0xdfe3ee, eye: 0xff2a48, skin: 0xebe5ec,
         blade: 0x2b2f3d, bladeGlow: 0x8fb4ff, gem: 0x8fb4ff,
       },
     },
@@ -31,7 +31,7 @@ export const COSMETICS = {
       desc: 'The colours of a king who never was. Unlocked by defeating the Veiled Countess.',
       colors: {
         coat: 0x5c0915, lining: 0x120f15, trim: 0xd3a65a, shirt: 0x15131a, pants: 0x140f13, boots: 0x0c0a0d,
-        gloves: 0x120e12, hairRoot: 0x101014, hairTip: 0x3b2a33, hairStreak: 0x8a2a3c, eye: 0xff2828, skin: 0xf4dfd8,
+        gloves: 0x120e12, hairRoot: 0x101014, hairTip: 0x3b2a33, hairStreak: 0x8a2a3c, eye: 0xff2828, skin: 0xebe5ec,
         blade: 0x1a0d10, bladeGlow: 0xff2a1a, gem: 0xffb040,
       },
     },
@@ -41,7 +41,7 @@ export const COSMETICS = {
       name: 'Crimson Rose',
       desc: 'Ribbed crimson velvet, black lace and a spider-lily in her hair.',
       colors: {
-        dress: 0x9a1529, dressDark: 0x5a0a17, black: 0x111015, lace: 0x0d0c10, trim: 0xc0c4cf, skin: 0xf6e3dd,
+        dress: 0x9a1529, dressDark: 0x5a0a17, black: 0x111015, lace: 0x0d0c10, trim: 0xc0c4cf, skin: 0xefe7ee,
         hairRoot: 0x0c0b0f, hairTip: 0x1d1520, hairHighlight: 0x5c1426, eye: 0xff1b3d, lips: 0x8e1428, lily: 0xd0142e,
         stockings: 0x121015, boots: 0x0c0b0e, bladeGlow: 0xd0102c,
       },
@@ -50,7 +50,7 @@ export const COSMETICS = {
       name: 'Midnight Violet',
       desc: 'Violet silk worn at the court of the old Queen. Unlocked by recovering every hidden relic.',
       colors: {
-        dress: 0x4b2a7a, dressDark: 0x26163f, black: 0x110f17, lace: 0x0f0d14, trim: 0xc8bfe0, skin: 0xf6e3dd,
+        dress: 0x4b2a7a, dressDark: 0x26163f, black: 0x110f17, lace: 0x0f0d14, trim: 0xc8bfe0, skin: 0xefe7ee,
         hairRoot: 0x0d0b12, hairTip: 0x221830, hairHighlight: 0x4c2c78, eye: 0xc04cff, lips: 0x6a1a52, lily: 0xa25cff,
         stockings: 0x14111a, boots: 0x0d0b10, bladeGlow: 0xa04cff,
       },
@@ -59,7 +59,7 @@ export const COSMETICS = {
       name: 'Queen of Thorns',
       desc: 'Black and gold, fit for the Crimson Moon. Unlocked by defeating the Veiled Countess.',
       colors: {
-        dress: 0x15121a, dressDark: 0x2a0710, black: 0x0c0b0f, lace: 0x0a090c, trim: 0xd4a95c, skin: 0xf6e3dd,
+        dress: 0x15121a, dressDark: 0x2a0710, black: 0x0c0b0f, lace: 0x0a090c, trim: 0xd4a95c, skin: 0xefe7ee,
         hairRoot: 0x0b0a0d, hairTip: 0x1a1216, hairHighlight: 0x7a1020, eye: 0xff2a2a, lips: 0x7a0d1c, lily: 0xd4a95c,
         stockings: 0x0f0d10, boots: 0x0b0a0c, bladeGlow: 0xff3a20,
       },
@@ -201,7 +201,7 @@ function buildLucien(c) {
   // head
   part(j.head, headGeometry(R, { jaw: 0.4 }), toon(c.skin, { rim: 0.6 }), { outline: 0.0035 });
   buildEars(j.head, R, c.skin, 0.55);
-  const face = buildFace(j.head, R, { eyeColor: c.eye, skin: c.skin, eyeTilt: 0.18, browAngle: -0.22, browY: 0.026, lidHeavy: 1.1, slit: true, fangs: true, smirk: 0.25, eyeW: 0.023, eyeH: 0.0145 });
+  const face = buildFace(j.head, R, { eyeColor: c.eye, skin: c.skin, eyeTilt: 0.18, browAngle: -0.28, browY: 0.025, browThick: 0.0036, lidHeavy: 1.1, slit: true, fangs: true, smirk: 0.25, eyeW: 0.023, eyeH: 0.0145 });
 
   // hair: messy silver-black, bangs falling between the eyes
   const hair = j.hair;
@@ -333,7 +333,7 @@ function buildSeraphina(c) {
   // head + face
   part(j.head, headGeometry(R, { jaw: 0.42, width: 0.88 }), skin, { outline: 0.0035 });
   buildEars(j.head, R, c.skin, 1.25);
-  const face = buildFace(j.head, R, { eyeColor: c.eye, skin: c.skin, eyeTilt: 0.14, browAngle: 0.05, browY: 0.03, browThick: 0.0024, lidHeavy: 1.15, wing: true, slit: true, lips: c.lips, fangs: false, eyeW: 0.025, eyeH: 0.0165, eyeX: 0.039 });
+  const face = buildFace(j.head, R, { eyeColor: c.eye, skin: c.skin, eyeTilt: 0.14, browAngle: 0.05, browY: 0.03, browThick: 0.0024, lidHeavy: 1.15, wing: true, slit: true, lips: c.lips, fangs: true, fangLen: 0.014, eyeW: 0.025, eyeH: 0.0165, eyeX: 0.039 });
   // dangling ruby earrings
   for (const s of [1, -1]) {
     part(j.head, new THREE.CylinderGeometry(0.0015, 0.0015, 0.04, 4), toon(c.trim), { pos: [s * R * 0.9, -0.045, -0.005], outline: false });
@@ -537,7 +537,7 @@ export function createHeroModel(charId, cosmeticId = 'default', opts = {}) {
   const builder = BUILDERS[charId] || buildLucien;
   const built = builder(cos.colors);
   optimiseRig(built.j.root, { outlines: opts.outlines !== false });
-  const animator = new HumanoidAnimator(built.j, built.style, { female: built.female });
+  const animator = new HumanoidAnimator(built.j, built.style, { female: built.female, vampire: charId !== 'kairo' });
   let time = 0;
   const model = {
     id: charId,
