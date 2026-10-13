@@ -5,6 +5,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { setOutlinesVisible } from '../entities/models/Toon.js';
 
 const GradeShader = {
   uniforms: {
@@ -62,7 +63,7 @@ const GradeShader = {
 };
 
 export const QUALITY_PRESETS = {
-  low: { pixelRatio: 1.0, shadows: false, bloom: false, particles: 0.45, antialias: false, shadowSize: 512 },
+  low: { pixelRatio: 1.0, shadows: false, bloom: false, particles: 0.45, antialias: false, shadowSize: 512, outlines: false },
   medium: { pixelRatio: 1.25, shadows: false, bloom: true, particles: 0.75, antialias: false, shadowSize: 1024 },
   high: { pixelRatio: 2.0, shadows: true, bloom: true, particles: 1.0, antialias: true, shadowSize: 2048 },
 };
@@ -116,6 +117,7 @@ export class Renderer {
     const shadowChanged = this.renderer.shadowMap.enabled !== q.shadows;
     this.renderer.shadowMap.enabled = q.shadows;
     this.bloomPass.enabled = q.bloom;
+    setOutlinesVisible(q.outlines !== false);
     if (shadowChanged && this.scene) {
       this.scene.traverse((o) => {
         if (o.material) {

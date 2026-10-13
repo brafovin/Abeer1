@@ -112,7 +112,7 @@ as lightweight instanced silhouettes that turn into full models when you get clo
 - **Horror director**: whispers, footsteps, a tolling bell, flickering and dying lights, silhouettes at
   the edge of your vision, and rare, fair jump scares. Shrines are safe zones.
 - **Accessibility**: master, music and effects volume; mouse sensitivity; invert Y; graphics quality
-  (Low, Medium, High); field of view; screen-shake amount; reduced flashing; reduced sudden loud sounds;
+  (Low turns off bloom, shadows and outlines for weaker GPUs; Medium; High); field of view; screen-shake amount; reduced flashing; reduced sudden loud sounds;
   damage numbers on or off.
 
 ---

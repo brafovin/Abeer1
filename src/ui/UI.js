@@ -334,7 +334,7 @@ export class UI {
         ${toggle('invertY', 'Invert vertical look')}
       </div>
       <div class="setting-group"><h3>Graphics</h3>
-        <div class="setting setting-wide"><label>Graphics quality<small>Low: no bloom/shadows · Medium: bloom · High: bloom, shadows, full resolution</small></label>
+        <div class="setting setting-wide"><label>Graphics quality<small>Low: no bloom, shadows or outlines (fastest) · Medium: bloom + outlines · High: adds shadows and full resolution</small></label>
           <div class="seg" data-seg="graphicsQuality">${['low', 'medium', 'high'].map((q) => `<button data-q="${q}" class="${s.get('graphicsQuality') === q ? 'active' : ''}">${q}</button>`).join('')}</div></div>
         ${slider('fov', 'Field of view', 50, 85, 1, fmts.fov)}
         ${toggle('showDamageNumbers', 'Show damage numbers')}

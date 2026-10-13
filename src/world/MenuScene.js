@@ -8,6 +8,8 @@ import { createHeroModel } from '../entities/models/CharacterModels.js';
 import { RIM } from '../entities/models/Toon.js';
 import { damp, seeded, TAU } from '../core/utils.js';
 
+const MODEL_POS = new THREE.Vector3(-0.6, 0, 1.0);
+
 export class MenuScene {
   constructor(game) {
     this.game = game;
@@ -78,8 +80,8 @@ export class MenuScene {
     const key = new THREE.DirectionalLight(0xb8c4ff, 1.4);
     key.position.set(6, 8, 10);
     this.scene.add(key);
-    const candle = new THREE.PointLight(0xff8a40, 9, 9, 1.6);
-    candle.position.set(0, 1.2, 2.2);
+    const candle = new THREE.PointLight(0xff8a40, 5, 8, 1.6);
+    candle.position.set(-2.2, 1.0, 1.8);
     this.scene.add(candle);
     this.candle = candle;
     this.built = true;
@@ -113,7 +115,7 @@ export class MenuScene {
       this.model.dispose();
     }
     this.model = createHeroModel(id, cosmetic);
-    this.model.root.position.set(0.5, 0, 1.4);
+    this.model.root.position.copy(MODEL_POS);
     this.scene.add(this.model.root);
     this.swapT = 0;
   }
@@ -127,13 +129,13 @@ export class MenuScene {
       this.swapT = (this.swapT ?? 1) + dt;
       if (!this.dragging) this.yaw = damp(this.yaw, this.charSelect ? this.yaw : -0.35 + Math.sin(t * 0.2) * 0.25, 1.5, dt);
       this.model.root.rotation.y = this.yaw;
-      const pose = this.swapT < 1.3 ? { type: 'attack', index: 2, t: Math.min(1, this.swapT / 1.3) } : null;
-      this.model.update(dt, { speed: 0, grounded: true, action: pose });
+      this.model.update(dt, { speed: 0, grounded: true, action: null });
     }
     // camera: wide establishing shot on the menu, closer portrait in character selection
     const cs = this.charSelect;
-    const want = cs ? new THREE.Vector3(-1.5 + Math.sin(t * 0.3) * 0.05, 1.45, 4.4) : new THREE.Vector3(-2.6 + Math.sin(t * 0.07) * 0.3, 1.7 + Math.sin(t * 0.11) * 0.1, 5.6);
-    const look = cs ? new THREE.Vector3(-0.9, 1.1, 0) : new THREE.Vector3(-1.1, 2.6, -4.4);
+    // character selection: hero on the left third, the info panel on the right
+    const want = cs ? MODEL_POS.clone().add(new THREE.Vector3(-0.25 + Math.sin(t * 0.3) * 0.05, 1.45, 3.3)) : new THREE.Vector3(-2.6 + Math.sin(t * 0.07) * 0.3, 1.7 + Math.sin(t * 0.11) * 0.1, 5.6);
+    const look = cs ? MODEL_POS.clone().add(new THREE.Vector3(1.25, 1.15, -1.4)) : new THREE.Vector3(-1.1, 2.6, -4.4);
     this.camera.position.lerp(want, 1 - Math.exp(-2.5 * dt));
     this.lookAt = this.lookAt ?? look.clone();
     this.lookAt.lerp(look, 1 - Math.exp(-2.5 * dt));
@@ -142,7 +144,7 @@ export class MenuScene {
       this.camera.aspect = window.innerWidth / window.innerHeight;
       this.camera.updateProjectionMatrix();
     }
-    this.candle.intensity = 9 + Math.sin(t * 13) * Math.sin(t * 7) * 2;
+    this.candle.intensity = 5 + Math.sin(t * 13) * Math.sin(t * 7) * 1.2;
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(1, 1, 1), e = new THREE.Euler();
     this.batData.forEach((b, i) => {
       const a = b.p + t * b.s;

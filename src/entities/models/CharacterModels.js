@@ -48,7 +48,7 @@ export const COSMETICS = {
     },
     midnight_violet: {
       name: 'Midnight Violet',
-      desc: 'Violet silk worn at the court of the old Queen. Unlocked by discovering every secret room.',
+      desc: 'Violet silk worn at the court of the old Queen. Unlocked by recovering every hidden relic.',
       colors: {
         dress: 0x4b2a7a, dressDark: 0x26163f, black: 0x110f17, lace: 0x0f0d14, trim: 0xc8bfe0, skin: 0xf6e3dd,
         hairRoot: 0x0d0b12, hairTip: 0x221830, hairHighlight: 0x4c2c78, eye: 0xc04cff, lips: 0x6a1a52, lily: 0xa25cff,
@@ -76,7 +76,7 @@ export const COSMETICS = {
     },
     frost_hunter: {
       name: 'Frost Hunter',
-      desc: 'Pale winter armour of the northern chapter. Unlocked by destroying every cursed altar.',
+      desc: 'Pale winter armour of the northern chapter. Unlocked by recovering every hidden relic.',
       colors: {
         suit: 0x1c2533, armor: 0xe3eaf4, armorDark: 0x7d8ca3, scarf: 0x8db2d8, belt: 0x3a3f4a, skin: 0xebc8b4,
         hairRoot: 0x17181f, hairTip: 0x353a48, hairStreak: 0xffffff, eye: 0x7fd8ff, bladeGlow: 0x8fe0ff, gloves: 0x242c3a, boots: 0x161b24,

@@ -100,6 +100,13 @@ export function flat(color) {
 }
 
 const outlineCache = new Map();
+let outlinesVisible = true;
+
+/** Globally show/hide every ink outline (used by the Low graphics preset to halve draw calls). */
+export function setOutlinesVisible(v) {
+  outlinesVisible = v;
+  for (const m of outlineCache.values()) m.visible = v;
+}
 /** Inverted-hull outline material: vertices are pushed along their normals and back faces drawn. */
 export function outlineMaterial(thickness = 0.008, color = 0x07040a) {
   const key = thickness + ':' + color;
@@ -112,6 +119,7 @@ export function outlineMaterial(thickness = 0.008, color = 0x07040a) {
       .replace('#include <begin_vertex>', 'vec3 transformed = vec3(position) + normalize(normal) * uOutline;');
   };
   m.customProgramCacheKey = () => 'outline-' + thickness;
+  m.visible = outlinesVisible;
   outlineCache.set(key, m);
   return m;
 }

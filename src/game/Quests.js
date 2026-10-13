@@ -43,19 +43,19 @@ export const QUESTS = {
     type: 'side', title: 'Relics of the Old Blood',
     desc: 'Three relics of the vampire royal house are hidden in Nocturna.',
     objectives: [{ event: 'relic', count: 3, text: 'Find hidden relics', marker: 'relic' }],
-    reward: { xp: 200, cosmetic: 'silver_moon' },
+    reward: { xp: 200, cosmetic: ['silver_moon', 'midnight_violet', 'frost_hunter'] },
   },
   side_altars: {
     type: 'side', title: 'Profane Altars',
     desc: 'Cursed altars feed the Blood Moon. Destroy them.',
     objectives: [{ event: 'altar', count: 3, text: 'Destroy cursed altars', marker: 'altar' }],
-    reward: { xp: 220, bloodMax: 20, cosmetic: 'frost_hunter' },
+    reward: { xp: 220, bloodMax: 20 },
   },
   side_secrets: {
     type: 'side', title: 'What the Walls Conceal',
     desc: 'The old builders loved their hidden rooms.',
     objectives: [{ event: 'secret', count: 2, text: 'Discover secret rooms', marker: 'secret' }],
-    reward: { xp: 160, cosmetic: 'midnight_violet' },
+    reward: { xp: 160, items: { blood_vial: 2 } },
   },
   side_records: {
     type: 'side', title: 'Lost Vampire Records',
@@ -173,8 +173,9 @@ export class QuestSystem {
       parts.push(g.inventory.relicName(r.relic));
     }
     if (r.cosmetic) {
-      const name = g.inventory.unlockCosmetic(r.cosmetic);
-      if (name) parts.push(`Outfit unlocked: ${name}`);
+      const ids = Array.isArray(r.cosmetic) ? r.cosmetic : [r.cosmetic];
+      for (const id of ids) g.inventory.unlockCosmetic(id);
+      parts.push('New outfits unlocked (Inventory → Outfits)');
     }
     g.ui.questComplete(q.title, parts);
     for (const n of q.next ?? []) this.start(n);
