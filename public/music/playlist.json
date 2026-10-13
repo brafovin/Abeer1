@@ -1,0 +1,1 @@
+{ "_readme": "Map a track name to an audio file placed in this folder, e.g. \"menu\": \"my-menu.mp3\". Track names: menu, explore, cathedral, forest, castle, boss, boss2, sovereigns, victory, or \"all\" to replace every track.", "tracks": {} }

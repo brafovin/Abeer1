@@ -1,0 +1,86 @@
+// Playable character definitions: stats, attack styles and abilities (data only — the ability
+// behaviour lives in combat/Abilities.js).
+
+export const CHARACTERS = {
+  lucien: {
+    id: 'lucien',
+    name: 'Lucien Noctis',
+    title: 'The Silent Eclipse',
+    age: 24,
+    kind: 'Vampire',
+    color: '#c4162e',
+    hair: 'Silver-black',
+    eyes: 'Crimson',
+    personality: 'Calm, mysterious and quietly dangerous. Speaks little; misses nothing.',
+    bio: 'A noble of the old blood who wakes in a ruined cathedral with seven nights missing from his memory — and a sword that hums when the moon is red.',
+    weapon: 'Nightfall — a supernatural black longsword',
+    style: 'sword',
+    base: { hp: 120, stamina: 100, blood: 100, speed: 5.0, damage: 1.0 },
+    combo: [
+      { damage: 20, range: 2.9, arc: 2.2, duration: 0.5, active: 0.42, stamina: 7, lunge: 2.2 },
+      { damage: 22, range: 2.9, arc: 2.2, duration: 0.5, active: 0.42, stamina: 7, lunge: 2.2 },
+      { damage: 34, range: 3.2, arc: 1.6, duration: 0.68, active: 0.48, stamina: 11, lunge: 3.2, knockback: 5, stagger: true },
+    ],
+    heavy: { type: 'heavy', name: 'Nightfall Cleave', desc: 'A wide, crushing two-handed cleave. Breaks guards.', damage: 52, range: 3.5, arc: 2.9, duration: 0.95, active: 0.6, stamina: 22, knockback: 7, stagger: true, guardBreak: true },
+    abilities: {
+      q: { id: 'shadow_blink', name: 'Shadow Blink', key: 'Q', cost: 18, cooldown: 5, desc: 'Vanish into shadow and reappear up to 8m away, tearing at every enemy around your arrival point.' },
+      e: { id: 'soul_drain', name: 'Soul Drain', key: 'E', cost: 25, cooldown: 8, desc: 'Rip the life from the nearest enemy in front of you, healing for part of the damage.' },
+      r: { id: 'crimson_eclipse', name: 'Crimson Eclipse', key: 'R', cost: 70, cooldown: 28, desc: 'Rise beneath a black sun and crash down, devastating everything within 9m.' },
+    },
+  },
+  seraphina: {
+    id: 'seraphina',
+    name: 'Seraphina Vex',
+    title: 'The Crimson Rose',
+    age: 23,
+    kind: 'Vampire',
+    color: '#d0142e',
+    hair: 'Black with burgundy highlights',
+    eyes: 'Ruby',
+    personality: 'Confident, brilliant and unreadable. Every smile is a riddle.',
+    bio: 'Heiress of a forbidden bloodline of blood-weavers. She shapes her own blood into blades — and she remembers less of the last seven nights than she pretends.',
+    weapon: 'Twin blood blades that float at her command',
+    style: 'blades',
+    base: { hp: 100, stamina: 100, blood: 120, speed: 5.2, damage: 1.0 },
+    combo: [
+      { damage: 16, range: 3.4, arc: 2.0, duration: 0.42, active: 0.4, stamina: 6, lunge: 1.4 },
+      { damage: 16, range: 3.4, arc: 2.0, duration: 0.42, active: 0.4, stamina: 6, lunge: 1.4 },
+      { damage: 30, range: 3.8, arc: 1.2, duration: 0.6, active: 0.46, stamina: 10, lunge: 2.4, knockback: 4, stagger: true },
+    ],
+    heavy: { type: 'projectile', name: 'Blood Lance', desc: 'Hurl a piercing lance of crystallised blood that passes through every enemy in a line.', damage: 44, speed: 26, range: 26, duration: 0.7, active: 0.5, stamina: 18, pierce: true },
+    abilities: {
+      q: { id: 'blood_roses', name: 'Blood Roses', key: 'Q', cost: 20, cooldown: 6, desc: 'A garden of razor roses blooms at your target, shredding and slowing everything inside.' },
+      e: { id: 'crimson_chains', name: 'Crimson Chains', key: 'E', cost: 22, cooldown: 10, desc: 'Bind an enemy in chains of blood, immobilising it (bosses are only slowed).' },
+      r: { id: 'queen_crimson_moon', name: 'Queen of the Crimson Moon', key: 'R', cost: 70, cooldown: 30, desc: 'Ascend beneath a crimson halo and call down a storm of blood blades on all nearby enemies.' },
+    },
+  },
+  kairo: {
+    id: 'kairo',
+    name: 'Kairo Draeven',
+    title: 'The Last Hunter',
+    age: 25,
+    kind: 'Vampire Hunter',
+    color: '#4f8dff',
+    hair: 'Dark, with a single white streak',
+    eyes: 'Glowing blue',
+    personality: 'Determined, sarcastic, allergic to authority. Jokes hardest when it is darkest.',
+    bio: 'A hunter of the Order of the Pale Dawn who should be dead. He woke with moonlight in his veins — and the uncomfortable suspicion that he is becoming what he hunts.',
+    weapon: 'Twin moon-silver sabres',
+    style: 'dual',
+    base: { hp: 130, stamina: 110, blood: 100, speed: 5.4, damage: 1.0 },
+    combo: [
+      { damage: 13, range: 2.7, arc: 2.0, duration: 0.34, active: 0.36, stamina: 5, lunge: 1.6 },
+      { damage: 13, range: 2.7, arc: 2.0, duration: 0.34, active: 0.36, stamina: 5, lunge: 1.6 },
+      { damage: 15, range: 2.8, arc: 2.0, duration: 0.4, active: 0.4, stamina: 6, lunge: 1.8 },
+      { damage: 26, range: 3.1, arc: 6.3, duration: 0.62, active: 0.5, stamina: 10, lunge: 0.6, knockback: 4, stagger: true },
+    ],
+    heavy: { type: 'block', name: 'Silver Guard', desc: 'Hold to block attacks from the front (80% less damage). A block in the first 0.25s parries, staggering melee attackers.' },
+    abilities: {
+      q: { id: 'spectral_dash', name: 'Spectral Dash', key: 'Q', cost: 14, cooldown: 4, desc: 'Become moonlight and dash 9m, invulnerable, slicing every enemy you pass through.' },
+      e: { id: 'moonlight_guard', name: 'Moonlight Guard', key: 'E', cost: 25, cooldown: 12, desc: 'A sphere of moonlight absorbs 75% of damage and destroys projectiles for 5 seconds.' },
+      r: { id: 'celestial_execution', name: 'Celestial Execution', key: 'R', cost: 70, cooldown: 26, desc: 'Lock onto a foe and strike seven times in a heartbeat, ending with a crushing finale.' },
+    },
+  },
+};
+
+export const CHARACTER_ORDER = ['lucien', 'seraphina', 'kairo'];
